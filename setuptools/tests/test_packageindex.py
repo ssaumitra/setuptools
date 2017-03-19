@@ -170,6 +170,11 @@ class TestPackageIndex:
         assert url == 'https://example.com/bar'
         assert rev == '2995'
 
+        #Test SSH URLs
+        url, rev = vsrfu('git+git@github.com:pandas-dev/pandas.git#egg=pandas')
+        assert url == 'git@github.com:pandas-dev/pandas.git'
+        assert rev == None
+
     def test_local_index(self, tmpdir):
         """
         local_open should be able to read an index from the file system.

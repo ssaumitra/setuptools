@@ -851,26 +851,22 @@ class PackageIndex(Environment):
         return filename
 
     @staticmethod
-    def _vcs_split_rev_from_url(url, pop_prefix=False):
-        scheme, netloc, path, query, frag = urllib.parse.urlsplit(url)
+    def _vcs_split_rev_from_url(url):
 
-        scheme = scheme.split('+', 1)[-1]
-
-        # Some fragment identification fails
-        path = path.split('#', 1)[0]
+        url_exp = re.compile("([a-z]*\+)?(?P<path>[^#]*)(#.*)?", re.I)
+        url_match = url_exp.match(url)
+        path = url_match.group('path')
 
         rev = None
-        if '@' in path:
+        #Interpret string after @ as revision number only for non-SSH URLs
+        if '@' in path and '://' in path:
             path, rev = path.rsplit('@', 1)
 
-        # Also, discard fragment
-        url = urllib.parse.urlunsplit((scheme, netloc, path, query, ''))
-
-        return url, rev
+        return path, rev
 
     def _download_git(self, url, filename):
         filename = filename.split('#', 1)[0]
-        url, rev = self._vcs_split_rev_from_url(url, pop_prefix=True)
+        url, rev = self._vcs_split_rev_from_url(url)
 
         self.info("Doing git clone from %s to %s", url, filename)
         os.system("git clone --quiet %s %s" % (url, filename))
@@ -886,7 +882,7 @@ class PackageIndex(Environment):
 
     def _download_hg(self, url, filename):
         filename = filename.split('#', 1)[0]
-        url, rev = self._vcs_split_rev_from_url(url, pop_prefix=True)
+        url, rev = self._vcs_split_rev_from_url(url)
 
         self.info("Doing hg clone from %s to %s", url, filename)
         os.system("hg clone --quiet %s %s" % (url, filename))
